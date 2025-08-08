@@ -1,6 +1,8 @@
 'use client';
 
 import Link from "next/link";
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +19,17 @@ import { signInWithEmailAndPassword } from 'firebase/auth'; // Import signInWith
 import PasswordResetRequestModal from '@/components/auth/password-reset-request-modal';
 import { useRouter } from 'next/navigation'; // Import useRouter
 
+// Dynamically import the SignInContent component with ssr: false
+const SignInContent = dynamic(() => Promise.resolve(SignInPageContent), {
+  ssr: false,
+  loading: () => <p>Loading sign in form...</p>, // Add a loading fallback
+});
+
+// Wrapper component to use the dynamically imported component
 export default function SignInPage() {
+ return <Suspense fallback={<div>Loading...</div>}><SignInContent /></Suspense>;
+}
+function SignInPageContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { firestore } = useFirebase(); // Access firestore here
@@ -129,6 +141,7 @@ export default function SignInPage() {
     </Card>
   );
 }
+
 function useFirebase(): { firestore: any; } {
   throw new Error("Function not implemented.");
 }
