@@ -7,10 +7,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { UploadCloud, ShieldCheck, Lock } from "lucide-react";
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { UploadResponseDialog } from "@/components/client/upload-response-dialog";
 import { useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -18,18 +16,10 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 
 
-// Mock data matching the dashboard for consistency
-const allDisputes = [
-  // Active items still in progress
-  { id: 5, bureau: 'Experian', item: 'Late Payment - Capital One', status: 'Submitted', statusVariant: 'secondary' as const, date: '2024-07-10', successChance: 75 },
-  { id: 6, bureau: 'Equifax', item: 'Incorrect Balance - Chase', status: 'Bureau Responded', statusVariant: 'outline' as const, date: '2024-07-08', successChance: 60 },
-  { id: 7, bureau: 'TransUnion', item: 'Unknown Inquiry', status: 'Submitted', statusVariant: 'secondary' as const, date: '2024-07-05', successChance: 85 },
-  // Successfully removed items
-  { id: 1, bureau: 'Experian', item: 'Collection Account - XYZ', status: 'Removed', statusVariant: 'default' as const, date: '2024-06-20', successChance: 90 },
-  { id: 2, bureau: 'TransUnion', item: 'Old Medical Bill', status: 'Removed', statusVariant: 'default' as const, date: '2024-06-15', successChance: 70 },
-  { id: 3, bureau: 'Equifax', item: 'Duplicate Inquiry', status: 'Removed', statusVariant: 'default' as const, date: '2024-05-30', successChance: 95 },
-  { id: 4, bureau: 'Experian', item: 'Incorrect Address History', status: 'Removed', statusVariant: 'default' as const, date: '2024-05-25', successChance: 80 },
-];
+import { UploadCloud, ShieldCheck, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type Dispute = typeof allDisputes[0];
 type SubscriptionTier = 'starter' | 'pro' | 'vip';
@@ -65,8 +55,29 @@ function SubscriptionSimulator({ subscription, setSubscription }: { subscription
 export default function DisputesPage() {
   const [subscription, setSubscription] = useState<SubscriptionTier>('pro');
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);  const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchDisputes = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch('/api/disputes'); // Assuming this is your API endpoint
+        if (!response.ok) {
+          throw new Error(`Error fetching disputes: ${response.statusText}`);
+        }
+        const data: Dispute[] = await response.json();
+        setDisputes(data);
+      } catch (err) {
+        setError((err as Error).message);
+        console.error("Failed to fetch disputes:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };    fetchDisputes();
+  }, []);
   const handleUploadClick = (dispute: Dispute) => {
     setSelectedDispute(dispute);
     setIsDialogOpen(true);
@@ -88,44 +99,53 @@ export default function DisputesPage() {
             </CardHeader>
             <CardContent>
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Bureau</TableHead>
-                    <TableHead>Disputed Item</TableHead>
-                    <TableHead>Date Submitted</TableHead>
-                    <TableHead>Success Chance</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
+                <TableHead>Bureau</TableHead>
+                <TableHead>Disputed Item</TableHead>
+                <TableHead>Date Submitted</TableHead>
+                <TableHead>Tracking #</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+                </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {allDisputes.map((dispute) => (
+                <TableBody>          {isLoading ? (
+                  // Skeleton loading state
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-6 w-24 ml-auto" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : error ? (
+                  // Error message
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-red-500">{error}</TableCell>
+                  </TableRow>
+                ) : disputes.length === 0 ? (
+                  // No disputes message
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      You haven't submitted any disputes yet. Generate letters on the "My Letters" page to get started.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  // Display disputes
+                  disputes.map((dispute) => (
                     <TableRow key={dispute.id}>
                       <TableCell className="font-medium">{dispute.bureau}</TableCell>
                       <TableCell>{dispute.item}</TableCell>
                       <TableCell>{dispute.date}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Progress value={dispute.successChance} className="w-20" />
-                          <span className="text-muted-foreground font-medium">{dispute.successChance}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={dispute.statusVariant} className={dispute.status === 'Removed' ? 'bg-green-600 hover:bg-green-600/80' : ''}>
-                          {dispute.status}
-                        </Badge>
-                      </TableCell>
+                      <TableCell>{dispute.trackingNumber || "N/A"}</TableCell>
+                      <TableCell><Badge variant={dispute.statusVariant}>{dispute.status}</Badge></TableCell>
                       <TableCell className="text-right">
-                        {dispute.status !== 'Removed' && (
-                          <Button variant="outline" size="sm" onClick={() => handleUploadClick(dispute)}>
-                            <UploadCloud className="mr-2 h-4 w-4" />
-                            Upload Response
-                          </Button>
-                        )}
+                        {dispute.status !== 'Removed' && (<Button variant="outline" size="sm" onClick={() => handleUploadClick(dispute)}>Upload Response</Button>)}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
+                  ))
+                )}</TableBody>
               </Table>
             </CardContent>
           </Card>

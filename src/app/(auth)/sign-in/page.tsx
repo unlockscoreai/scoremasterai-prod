@@ -15,8 +15,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { auth } from '@/lib/firebase'; // Import auth and firestore
-import { signInWithEmailAndPassword } from 'firebase/auth'; // Import signInWithEmailAndPassword
+import { signInWithEmailAndPassword, getAuth } from 'firebase/auth'; // Import signInWithEmailAndPassword
 import PasswordResetRequestModal from '@/components/auth/password-reset-request-modal';
+import { getFirestore } from 'firebase/firestore';
 import { useRouter } from 'next/navigation'; // Import useRouter
 
 // Dynamically import the SignInContent component with ssr: false

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -24,31 +24,14 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { sendLetterForMailing } from './actions';
 import { Switch } from '@/components/ui/switch';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Mock data for letters
-const mockLetters = [
-  {
-    id: 'letter-1',
-    title: 'Initial Dispute for Experian',
-    date: '2024-07-25',
-    status: 'Awaiting Approval',
-    content: 'This is the first dispute letter for Experian...',
-  },
-  {
-    id: 'letter-2',
-    title: 'Follow-up for Equifax',
-    date: '2024-07-22',
-    status: 'Mailed',
-    content: 'This is a follow-up letter for Equifax...',
-  },
-  {
-    id: 'letter-3',
-    title: 'MOV Request for TransUnion',
-    date: '2024-07-18',
-    status: 'Mailed',
-    content: 'This is a Method of Verification letter for TransUnion...',
-  },
-];
+export type Letter = {
+  id: string;
+  title: string;
+  date: string;
+  status: 'Awaiting Approval' | 'Mailed';
+};
 
 type SubscriptionTier = 'starter' | 'pro' | 'vip';
 
@@ -92,9 +75,48 @@ function SubscriptionSimulator({
   );
 }
 
+
+
 export default function LettersPage() {
   const [subscription, setSubscription] = useState<SubscriptionTier>('pro');
   const [mailingStatus, setMailingStatus] = useState<Record<string, 'idle' | 'loading' | 'sent'>>({});
+  const [letters, setLetters] = useState<Letter[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Fetch letters
+        const response = await fetch('/api/user/letters'); // Replace with your actual endpoint
+        if (!response.ok) {
+          throw new Error(`Error fetching letters: ${response.statusText}`);
+        }
+        const lettersData = await response.json();
+        setLetters(lettersData);
+
+        // Fetch subscription status
+        setSubscriptionLoading(true);
+        const subscriptionResponse = await fetch('/api/user/subscription'); // Replace with your actual endpoint
+        if (!subscriptionResponse.ok) {
+            throw new Error(`Error fetching subscription: ${subscriptionResponse.statusText}`);
+        }
+        const subscriptionData = await subscriptionResponse.json();
+        setSubscription(subscriptionData.tier as SubscriptionTier);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+        setSubscriptionLoading(false);
+      }
+    };
+
+    fetchLetters();
+  }, []);
+
   const [autoDispute, setAutoDispute] = useState(false);
   const { toast } = useToast();
 
@@ -118,6 +140,7 @@ export default function LettersPage() {
   }
 
 
+
   const isSubscribed = subscription === 'pro' || subscription === 'vip';
 
   return (
@@ -125,7 +148,7 @@ export default function LettersPage() {
       <SubscriptionSimulator
         subscription={subscription}
         setSubscription={setSubscription}
-      />
+        />
       {isSubscribed ? (
         <>
         <Card>
