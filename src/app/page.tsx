@@ -31,7 +31,6 @@ function LandingHeader() {
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
             <Link href="#features" className="text-foreground/60 transition-colors hover:text-foreground/80">Features</Link>
             <Link href="#pricing" className="text-foreground/60 transition-colors hover:text-foreground/80">Pricing</Link>
-            <Link href="/business-intake" className="text-foreground/60 transition-colors hover:text-foreground/80">Business AI</Link>
             <Link href="/sign-in" className="text-foreground/60 transition-colors hover:text-foreground/80">Affiliates</Link>
           </nav>
           <div className="flex items-center gap-2">
@@ -283,35 +282,6 @@ export default function Home() {
                 ))}
             </div>
 
-            <div className="grid gap-12 mt-16 md:grid-cols-2">
-              <Card className="flex flex-col p-6">
-                <CardHeader className="p-0">
-                  <CardTitle className="font-headline text-2xl flex items-center gap-2"><Briefcase /> For Business Credit</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 p-0 mt-4">
-                  <p className="text-muted-foreground">Get a complete fundability analysis for your business. Our AI analyzes your public records and credit to give you actionable steps for securing funding.</p>
-                </CardContent>
-                <CardFooter className="p-0 mt-6">
-                  <Button className="w-full" asChild>
-                    <Link href="/business-intake">Get Free Business Scan</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              <Card className="flex flex-col p-6">
-                <CardHeader className="p-0">
-                  <CardTitle className="font-headline text-2xl flex items-center gap-2"><Building /> White Label & Licensing</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 p-0 mt-4">
-                  <p className="text-muted-foreground">For partners managing 100+ clients. Get a fully branded version of our platform with dedicated infrastructure and support.</p>
-                </CardContent>
-                <CardFooter className="p-0 mt-6">
-                  <Button className="w-full" asChild variant="outline">
-                    <Link href="#">Contact Sales</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
           </div>
         </section>
       </main>

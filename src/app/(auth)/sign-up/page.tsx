@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link"
+import { useRouter } from 'next/navigation';
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,19 +14,60 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useToast } from "@/hooks/use-toast";
+import { auth, firestore } from '@/lib/firebase';
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+
+// Use auth and db in your components
 
 export default function SignUpPage() {
+  const router = useRouter();
+  const { toast } = useToast();
   const [role, setRole] = useState("client");
-  
-  let dashboardUrl = '/client/dashboard';
-  if (role === 'affiliate') {
-    dashboardUrl = '/affiliate/dashboard';
-  } else if (role === 'business') {
-    dashboardUrl = '/business-client/dashboard';
-  }
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Store additional user data in Firestore
+ await setDoc(doc(firestore, "users", user.uid), {
+        firstName,
+        lastName,
+        email,
+        role, // Store the selected role
+        createdAt: new Date(),
+      });
+
+      toast({
+        title: "Account created!",
+        description: "Welcome to UnlockScore AI.",
+      });
+
+      // Redirect to the appropriate dashboard
+      router.push(role === 'affiliate' ? '/affiliate/dashboard' : '/client/dashboard');
+    } catch (error: any) {
+      toast({
+        title: "Signup Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <Card className="mx-auto max-w-sm">
+    <Card className="mx-auto max-w-sm" onSubmit={handleSignUp}>
       <CardHeader>
         <CardTitle className="text-xl font-headline">Sign Up</CardTitle>
         <CardDescription>
@@ -74,9 +116,7 @@ export default function SignUpPage() {
               </div>
             </RadioGroup>
           </div>
-          <Button type="submit" className="w-full" asChild>
-            <Link href={dashboardUrl}>Create an account</Link>
-          </Button>
+          <Button type="submit" className="w-full">Create an account</Button>
         </div>
         <div className="mt-4 text-center text-sm">
           Already have an account?{" "}

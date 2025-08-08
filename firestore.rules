@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// Use the built-in roles and permissions to define access controls.
+// Learn more: https://firebase.google.com/docs/firestore/security-rules#roles-and-permissions
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rules for the 'clients' collection
+    match /clients/{clientId} {
+      allow read, update: if request.auth != null && request.auth.uid == clientId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['creditScore', 'disputes', 'onboardingComplete']);
+      allow create: if request.auth != null;
+    }
+
+    // Default rule for other collections (deny access)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
